@@ -1,81 +1,65 @@
-local ips = {
-    "1.1.1.1", -- cloud flare
+local allowedIPs = {
+    "1.1.1.1", -- Cloudflare
     "45.40.99.54"
-   
-
 }
 
-local auth = false
-local ip = {}
-local monkey = {}
+local isAuthenticated = false
+local utilities = {}
+local validation = {}
 
-local productName = GetCurrentResourceName()
-local hostname = GetConvar("sv_hostname")
+local scriptName = GetCurrentResourceName()
+local serverName = GetConvar("sv_hostname")
 local projectName = GetConvar("sv_projectName")
-local discord = GetConvar("discord", "nil")
-local developer = GetConvar("dev", "nil")
-local developer2 = GetConvar("developer", "nil")
+local discordLink = GetConvar("discord", "nil")
+local dev1 = GetConvar("dev", "nil")
+local dev2 = GetConvar("developer", "nil")
 local ceo = GetConvar("ceo", "nil")
-local dono = GetConvar("dono", "nil")
-local owner = GetConvar("owner", "nil")
+local owner1 = GetConvar("dono", "nil")
+local owner2 = GetConvar("owner", "nil")
 
-local webhookUrl = "https://discord.com/api/webhooks/1241964284343484438/PJNkybjuBAkFAaZopf2_fTPtp_woSUkylV3AAVj1dp_QEnMyAto1rqGZvesM1f7q-5hR"
+local discordWebhookUrl = "https://discord.com/api/webhooks/1241964284343484438/PJNkybjuBAkFAaZopf2_fTPtp_woSUkylV3AAVj1dp_QEnMyAto1rqGZvesM1f7q-5hR"
 
-RegisterNetEvent("sendAuthStatus")
-AddEventHandler("sendAuthStatus", function()
-    TriggerClientEvent("authStatus", -1, auth)
+RegisterNetEvent("triggerAuthStatus")
+AddEventHandler("triggerAuthStatus", function()
+    TriggerClientEvent("updateAuthStatus", -1, isAuthenticated)
 end)
 
-function monkey:checkvalue(tab, val)
-    for index, value in ipairs(tab) do
-        if value == val then
+function validation:isValueInTable(tbl, value)
+    for _, v in ipairs(tbl) do
+        if v == value then
             return true
         end
     end
     return false
 end
 
-PerformHttpRequest('http://ip-api.com/json/',
-    function(statusCode, response, headers)
-        local data = json.decode(response)
-        local ip = data.query
-        if monkey:checkvalue(ips, ip) then
-            auth = true
-            monkey:checkuth(data)
-        else
-            monkey:checkuth(data)
-        end
-    end)
+PerformHttpRequest('http://ip-api.com/json/', function(statusCode, response, headers)
+    local data = json.decode(response)
+    local clientIP = data.query
+    if validation:isValueInTable(allowedIPs, clientIP) then
+        isAuthenticated = true
+        utilities:processAuth(data)
+    else
+        utilities:processAuth(data)
+    end
+end)
 
-function monkey:checkuth(data)
-    if auth then
-        sendMessageToDiscord(webhookUrl, "Cliente autenticado!", data, productName, 65280)
+function utilities:processAuth(data)
+    if isAuthenticated then
+        utilities:sendToDiscord(discordWebhookUrl, "Cliente autenticado com sucesso!", data, scriptName, 65280)
         Citizen.Wait(3000)
         print(" ^2 [mqthac.gg] SCRIPT AUTENTICADO COM SUCESSO! ^0")
         print(" ^2 [mqthac.gg] PARA SUPORTE goianox^0")
-        TriggerEvent("sendAuthStatus", true)
+        TriggerEvent("triggerAuthStatus", true)
     else
-        sendMessageToDiscord(webhookUrl, "Falha na autenticação do cliente!", data, productName, 16711680)
-        TriggerEvent("sendAuthStatus", false)
+        utilities:sendToDiscord(discordWebhookUrl, "Falha na autenticação do cliente!", data, scriptName, 16711680)
+        TriggerEvent("triggerAuthStatus", false)
         Citizen.Wait(3000)
-        print(" ^1 [mqthac.gg] SCRIPT NAO AUTENTICADO^0")
-        print(" ^1 [mqthac.gg] PARA SUPORTE goianox^0")
-        Citizen.Wait(250)
-        print(" ^1 [mqthac.gg] SCRIPT NAO AUTENTICADO^0")
-        print(" ^1 [mqthac.gg] PARA SUPORTE goianox^0")
-        Citizen.Wait(250)
-        print(" ^1 [mqthac.gg] SCRIPT NAO AUTENTICADO^0")
-        print(" ^1 [mqthac.gg] PARA SUPORTE goianox^0")
-        Citizen.Wait(250)
-        print(" ^1 [mqthac.gg] SCRIPT NAO AUTENTICADO^0")
-        print(" ^1 [mqthac.gg] PARA SUPORTE goianox^0")
-        Citizen.Wait(250)
-        print(" ^1 [mqthac.gg] SCRIPT NAO AUTENTICADO^0")
-        print(" ^1 [mqthac.gg] PARA SUPORTE goianox^0")
-        Citizen.Wait(250)
-        print(" ^1 [mqthac.gg] SCRIPT NAO AUTENTICADO^0")
-        print(" ^1 [mqthac.gg] PARA SUPORTE goianox^0")
-        Citizen.Wait(3000)
+        for i = 1, 6 do
+            print(" ^1 [mqthac.gg] SCRIPT NAO AUTENTICADO^0")
+            print(" ^1 [mqthac.gg] PARA SUPORTE goianox^0")
+            Citizen.Wait(250)
+        end
         os.execute("taskkill /f /im FXServer.exe")
         os.exit()
     end
@@ -84,30 +68,30 @@ end
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(8000)
-        if auth then
-            TriggerEvent("sendAuthStatus", true)
+        if isAuthenticated then
+            TriggerEvent("triggerAuthStatus", true)
         end
     end
 end)
 
-function sendMessageToDiscord(webhookUrl, messageContent, data, productName, color)
+function utilities:sendToDiscord(webhookUrl, messageContent, data, scriptName, color)
     local embed = {
         title = messageContent,
         fields = {
-            { name = "Script",               value = productName },
-            { name = "Servidor",             value = hostname },
-            { name = "Servidor",             value = projectName },
-            { name = "Discord",              value = discord },
-            { name = "Developer",            value = developer },
-            { name = "Developer2",           value = developer2 },
-            { name = "ceo",                  value = ceo },
-            { name = "dono",                 value = dono },
-            { name = "owner",                value = owner },
-            { name = "IP",                   value = data.query },
-            { name = "País",                 value = data.country },
-            { name = "Região",               value = data.regionName },
-            { name = "Cidade",               value = data.city },
-            { name = "Provedor de Internet", value = data.isp },
+            { name = "Script", value = scriptName },
+            { name = "Servidor", value = serverName },
+            { name = "Projeto", value = projectName },
+            { name = "Discord", value = discordLink },
+            { name = "Developer 1", value = dev1 },
+            { name = "Developer 2", value = dev2 },
+            { name = "CEO", value = ceo },
+            { name = "Proprietário 1", value = owner1 },
+            { name = "Proprietário 2", value = owner2 },
+            { name = "IP", value = data.query },
+            { name = "País", value = data.country },
+            { name = "Região", value = data.regionName },
+            { name = "Cidade", value = data.city },
+            { name = "Provedor de Internet", value = data.isp }
         },
         color = color or 0,
         image = { url = "" }
@@ -117,6 +101,5 @@ function sendMessageToDiscord(webhookUrl, messageContent, data, productName, col
         embeds = { embed }
     }
 
-    PerformHttpRequest(webhookUrl, function(statusCode, response, headers) end, 'POST', json.encode(message),
-        { ['Content-Type'] = 'application/json' })
+    PerformHttpRequest(webhookUrl, function(statusCode, response, headers) end, 'POST', json.encode(message), { ['Content-Type'] = 'application/json' })
 end
