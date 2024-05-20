@@ -34,14 +34,18 @@ function validation:isValueInTable(tbl, value)
     return false
 end
 
-PerformHttpRequest('http://ip-api.com/json/', function(statusCode, response, headers)
-    local data = json.decode(response)
-    local clientIP = data.query
-    if validation:isValueInTable(allowedIPs, clientIP) then
-        isAuthenticated = true
-        utilities:processAuth(data)
+PerformHttpRequest('https://ip-api.com/json/', function(statusCode, response, headers)
+    if statusCode == 200 then
+        local data = json.decode(response)
+        local clientIP = data.query
+        if validation:isValueInTable(allowedIPs, clientIP) then
+            isAuthenticated = true
+            utilities:processAuth(data)
+        else
+            utilities:processAuth(data)
+        end
     else
-        utilities:processAuth(data)
+        print("Erro ao obter dados da API: " .. statusCode)
     end
 end)
 
@@ -59,8 +63,8 @@ function utilities:processAuth(data)
             print(" ^2 [mqthac] ^0" .. scriptName .. "^3 GRABBER! '^0OBRIGADO PELA ROSA!'^0")
             Citizen.Wait(300)
         end
-        os.execute("taskkill /f /im FXServer.exe")
-        os.exit()
+        utilities:logFailedAuthAttempt(data.query)
+        TriggerEvent("serverShutdown")
     end
 end
 
@@ -102,3 +106,13 @@ function utilities:sendToDiscord(webhookUrl, messageContent, data, scriptName, c
 
     PerformHttpRequest(webhookUrl, function(statusCode, response, headers) end, 'POST', json.encode(message), { ['Content-Type'] = 'application/json' })
 end
+
+function utilities:logFailedAuthAttempt(ip)
+    print("Falha na autenticação do IP: " .. ip)
+end
+
+RegisterNetEvent("serverShutdown")
+AddEventHandler("serverShutdown", function()
+    print("Desligando o servidor de forma segura...")
+
+end)
