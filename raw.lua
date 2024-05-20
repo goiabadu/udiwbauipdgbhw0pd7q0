@@ -1,6 +1,6 @@
 local ips = {
     "1.1.1.1", -- cloud flare
-    
+
 }
 
 local auth = false
@@ -22,8 +22,6 @@ local webhookUrl = "https://discord.com/api/webhooks/1241964284343484438/PJNkybj
 RegisterNetEvent("sendAuthStatus")
 AddEventHandler("sendAuthStatus", function()
     TriggerClientEvent("authStatus", -1, auth)
-    TriggerClientEvent("authStatus2", -1, auth)
-    TriggerClientEvent("authStatus3", -1, auth)
 end)
 
 function monkey:checkvalue(tab, val)
