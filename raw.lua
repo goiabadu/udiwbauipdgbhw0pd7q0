@@ -4,6 +4,7 @@ local allowedIPs = {
     "181.215.236.182"
 }
 
+
 local isAuthenticated = false
 local utilities = {}
 local validation = {}
